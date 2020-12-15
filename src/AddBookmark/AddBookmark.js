@@ -1,15 +1,21 @@
 import React, { Component } from  'react';
 import config from '../config'
 import './AddBookmark.css';
+import PropTypes from 'prop-types';
+import BookmarksContext from '../BookmarksContext';
 
 const Required = () => (
   <span className='AddBookmark__required'>*</span>
 )
 
 class AddBookmark extends Component {
-  static defaultProps = {
-    onAddBookmark: () => {}
+  static PropTypes = {
+    history: PropTypes.shape({
+      push: PropTypes.func,
+    }).isRequired,
   };
+
+  static contextType = BookmarksContext;
 
   state = {
     error: null,
@@ -37,10 +43,7 @@ class AddBookmark extends Component {
       .then(res => {
         if (!res.ok) {
           // get the error message from the response,
-          return res.json().then(error => {
-            // then throw it
-            throw error
-          })
+          return res.json().then(error => Promise.reject(error))
         }
         return res.json()
       })
@@ -49,16 +52,17 @@ class AddBookmark extends Component {
         url.value = ''
         description.value = ''
         rating.value = ''
-        this.props.onAddBookmark(data)
+        this.context.addBookmark(data)
+        this.props.history.push('/')
       })
       .catch(error => {
+        console.error(error)
         this.setState({ error })
       })
   }
 
   render() {
     const { error } = this.state
-    const { onClickCancel } = this.props
     return (
       <section className='AddBookmark'>
         <h2>Create a bookmark</h2>
@@ -123,7 +127,7 @@ class AddBookmark extends Component {
             />
           </div>
           <div className='AddBookmark__buttons'>
-            <button type='button' onClick={onClickCancel}>
+            <button type='button' onClick={this.handleClickCancel}>
               Cancel
             </button>
             {' '}
